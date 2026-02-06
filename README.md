@@ -1,36 +1,34 @@
-# Portico Archiving Automation
+# Medical Journal Archiving Automation
 
 ## The Problem
 
-I work with MMCTS (Multimedia Manual of Cardiothoracic Surgery), a peer-reviewed medical journal that publishes step-by-step surgical technique tutorials. 
-
-To comply with PubMed indexing requirements, all published MMCTS content must be archived to Portico for long-term digital preservation. This archiving process requires uploading exactly 3 files for each manuscript:
-- **PDF** - The tutorial document (created and sent to us by our partners wont discole the name)
-- **MP4** - The surgical technique video
+I work with MMCTS (Multimedia Manual of Cardiothoracic Surgery), a peer-reviewed video manual for cardiovascular and thoracic surgery and case reports. 
+To comply with PubMed indexing requirements, all published MMCTS content must be archived for long-term digital preservation. This archiving process requires uploading exactly 3 files for each manuscript:
+- **PDF** - The tutorial document (created and sent to us by a partnering company)
+- **MP4** - The surgical tutorial/case report video
 - **XML** - The article metadata
 
-These files must be organised into individual folders (one per manuscript), zipped together, and uploaded via FTP to Portico.
+These files must be organised into individual folders (one per manuscript), zipped together, and uploaded to Filezilla.
 
 ### The Manual Process Was Tedious
 
 Before this script, the archiving workflow looked like this:
 
-1. list of published manuscripts pdfs are provided by partner comany 
-2. Open the Work In Progress (WIP) folder containing manusccript files
-3. Manually find each manuscript folder (named like "MMCTS-2025-101-AuthorName") that correspnd to the list of porvided pdfs
-4. Create a new folder with just the manuscript ID (without the author name)
-5. Copy the XML and MP4 files from the manuscript folder
-6. Navigate to an FTP folder where the pdfs provded by Cardio Projects are saved
-7. Find the matching PDF and copy it into the new folder
-10. Repeat for each manuscript
-11. Zip each folder
-12. Upload to FileZilla
+1. **Manuscript published** - Once up to 10 manuscript has been published, a request is sent to our partner company to create PDF's of the list of manuscripts published
+2. **Save  PDF's** - Once the pdfs are provided by partner company, I save them into a local File Transfer Protocol (FTP) folder (e.g c:\FTP\2025\Batch37\{PDF files})
+3. **Find manuscript folders** - Open the Work In Progress (WIP) folder containing all submitted manusccript files and find each manuscript folder (named like "MMCTS-2025-101-AuthorName") that correspond to the list of provided pdfs
+4. **Create archive folder** - for each manuscript that needs to be archived, create a corresponding arching folder with just the manuscript ID (without the author name) in the FTP folder
+5. **Copy the XML and MP4** - from the WIP manuscript folder copy and past the mp4 and xml files it into the new corresponding archiving folder.
+6. **Move the PDF** - Find the corresponding PDF and move it into the archive folder
+7. Repeat for each manuscript that needs archiving
+8. Zip each folder
+9. Upload to FileZilla
 
-For multiple manuscripts, this meant lots of clicking, copying, pasting, and double-checking to make sure nothing was missed. It was time-consuming and error-prone. As there were large mp4 files being copied i had to wait up to 5 minutes per manuscript. I would archive in a month between 20-35 manuscripts. So this mannual work could take me up to 3 hours per month. 
+This was time-consuming, tedious and error-prone. As there were large mp4 files being copied i had to wait up to 5 minutes per manuscript. I would archive in a month between 20-30 manuscripts. So this mannual work could take me over 2 hours per month. 
 
 ### The Solution
 
-I wanted to solve this problem using Python. This script automates the entire organisation process, turning hours of manual work into a single command, allowing the archiving to occur in the background. 
+I wanted to solve this problem using Python. This script automates the entire organisation process, turning hours of manual work into a single command, allowing the archiving to occur in the background whilts I do other useful work. 
 
 ## What This Script Does
 
@@ -40,6 +38,8 @@ The script automatically:
 3. Finds and moves the corresponding PDF from the PDF folder
 4. Copies the XML and MP4 files from the manuscript's WIP folder
 5. Moves all organised folders to the FTP directory, ready for zipping and upload
+
+How it works
 
 ## Requirements
 
