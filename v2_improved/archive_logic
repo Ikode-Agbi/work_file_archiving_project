@@ -1,1 +1,206 @@
 
+import shutil, os, logging
+from datetime import datetime
+
+'''
+- Looks through WIP for Man Id's
+- If Man folders found, create new corresponding arch folder
+    - name corresponding arch folder
+    - copy mp4 and xml file from orgin WIP folder to new arch folder
+    - identify respective pdf file
+        - move pdf file into arch folder
+
+'''
+
+WIP_PATH = r"C:\Users\IkodeAgbi\European Association for Cardio-Thoracic Surgery\Windsor Team - Publications\MMCTS\Operations\Wipdocs\2025"
+FTP_PATH = r"C:\FTP\2025"
+DRY_RUN = True
+
+MANUSCRIPT_ID = [
+         "MMCTS-2025-063",
+         "MMCTS-2025-064"
+   ]
+
+logging.basicConfig(
+   level=logging.INFO,
+   format='%(asctime)s - %(levelname)s - %(message)s',
+   handlers=[
+      logging.StreamHandler(),
+      logging.FileHandler('archive.log')
+   ]
+)
+logger = logging.getLogger(__name__)
+
+def create_folder_name(folder, logger):
+
+   '''
+   This function creates a new conventional archiving folder name 
+
+   takes - MMCTS-2025-161_{Author_name}
+
+   returns - 10.1510-mmcts2025-161-Portico
+
+   '''
+
+
+   try:
+      manuscript_id = folder.split("_")[0].strip()
+      logger.info(f"{folder} has been renamed to {'10.1510-' + (manuscript_id.lower()) +'-Portico'}")
+      return "10.1510-" + manuscript_id.lower() + "-Portico"
+
+   except Exception as e: 
+      logger.error(f"There was an error in renaming {folder} to {'10.1510' + (manuscript_id.lower()) +'-Portico'}:{e}")
+      return False
+      
+
+def  create_portico_folder(portico_folder_destination_path, portico_folder_name, DRY_RUN, logger):
+
+   '''
+   This function creates a portico folder. The path has already been made in the main archive code.
+
+   '''
+   
+   if not os.path.exists(portico_folder_destination_path):
+      try:   
+         if DRY_RUN:
+            logger.info(f"DRY_RUN would create: {portico_folder_name}")
+            return True
+         else: 
+            os.makedirs(portico_folder_destination_path)
+            logger.info(f"Portico folder created: {portico_folder_name}")
+            return True
+         
+      except PermissionError:
+         logger.error(f"permission denied cannot create: {portico_folder_destination_path}")
+         return False
+      except Exception as error:
+         logger.error(f"There was an error creating folder {portico_folder_destination_path}: {error}")
+         return False
+   else: 
+      logger.info(f"Folder already exists: {portico_folder_destination_path}")
+      return True
+
+def file_counter(manuscript_folder_path, logger, folder):
+
+   '''
+   This function is mainly to know what is happening. There should only be 1 mp4 file and 1 xml found in each folder.
+   However, even if there are multiple or none, thats okay. I just need to know.
+   '''
+
+   mp4_file_found = 0
+   xml_file_found = 0
+
+   for file in os.listdir(manuscript_folder_path):
+      if file.endswith("mp4"):
+         mp4_file_found += 1
+      elif file.endswith("xml"):
+         xml_file_found += 1
+   
+
+   if mp4_file_found > 1:
+      logger.warning(f"Multiple mp4 files have been found in {folder}:{mp4_file_found} found")
+     
+   elif mp4_file_found < 1:
+      logger.warning(f"No mp4 file has been found")
+
+   if xml_file_found > 1:
+      logger.warning(f"Multiple xml files have been found in {folder}:{xml_file_found} found")
+
+   elif xml_file_found < 1:
+      logger.warning(f"No xml file has been found")
+    
+
+def copy_file(wip_mp4_xml_path, DRY_RUN, logger,  portico_folder_destination_path, file, portico_folder_name):
+
+   if not os.path.exists(wip_mp4_xml_path):
+      logger.error(f"{file} no longer exists")
+      return False
+
+   try:
+      if DRY_RUN:
+         logger.info(f"DRY_RUN would copy: {file} -> {portico_folder_name}")
+         return True
+      else:
+         shutil.copy2(wip_mp4_xml_path, portico_folder_destination_path)
+         logger.info(f"The following file was copied: {wip_mp4_xml_path} to {portico_folder_destination_path}")
+         return True
+   except PermissionError:
+      logger.error(f"Permission denied, unable to copy {file} to {portico_folder_name}")
+      return False
+   except Exception as error:
+      logger.error(f"There an error why trying to copy {file} to {portico_folder_name}: {error}")
+      return False
+
+      
+def move_pdf(pdf_file_path, DRY_RUN, logger, portico_folder_destination_path, pdf_file, portico_folder_name):
+   
+   if not os.path.exists(pdf_file_path):
+      logger.error(f"{pdf_file} no longer exists")
+      return False
+   
+   try:
+      if DRY_RUN:
+         logger.info(f"DRY RUN: Would move {pdf_file} to { portico_folder_name}")
+         return True
+      else:
+         shutil.move(pdf_file_path, portico_folder_destination_path)
+         logger.info(f"pdf moved: {pdf_file_path} to {portico_folder_destination_path}")
+         return True
+   except PermissionError:
+      logger.error(f"Permission denied, unable to move {pdf_file_path} to {portico_folder_destination_path}")
+      return False
+   except Exception as error:
+      logger.error(f"Error - unable to move {pdf_file_path} to {portico_folder_destination_path}: {error}")
+      return False
+
+
+
+def archive(logger):
+
+   logger.info(f"{'DRY RUN' if DRY_RUN else 'LIVE'}")
+   logger.info(f"{len(MANUSCRIPT_ID)} manuscripts will be archived")
+
+   folder_created = 0
+   files_copied = 0
+   pdf_file_moved = 0
+
+   # looking through WIP for manuscripts that match the manuscript_id list
+   for manuscript in MANUSCRIPT_ID:
+      for folder in os.listdir(WIP_PATH):
+         if manuscript in folder:
+            manuscript_folder_path = os.path.join(WIP_PATH, folder) # path to files in respective WIP folder
+   # creating a corresponding WIP folder archiving folder 
+            portico_folder_name = create_folder_name(folder, logger) # create a folder name for the arching folder
+            portico_folder_destination_path = os.path.join(FTP_PATH, portico_folder_name) # creates the path for new archiving folder
+            if create_portico_folder(portico_folder_destination_path, portico_folder_name, DRY_RUN, logger):  # create the archiving folder 
+               folder_created += 1
+
+   # copying mp4 and xml files into arching folder
+            file_counter(manuscript_folder_path, logger, folder)
+            for file in os.listdir(manuscript_folder_path):
+               if file.endswith("mp4") or file.endswith("xml"):
+                  wip_mp4_xml_path = os.path.join(manuscript_folder_path, file)
+                  if copy_file(wip_mp4_xml_path, DRY_RUN, logger,  portico_folder_destination_path, file, portico_folder_name):
+                     files_copied += 1
+
+   # moving the pdfs into their respective archiving folders 
+            for file in os.listdir(FTP_PATH):
+               if file.endswith("pdf"):
+                  first_split = file.split("2025.")[1]
+                  three_digit = first_split.split("-")[0]
+                  pdf_file = "MMCTS-2025-" + three_digit.strip() # new name
+                  pdf_file_path = os.path.join(FTP_PATH, pdf_file) # path to pdf
+                  if pdf_file == manuscript:
+                     if move_pdf(pdf_file_path, DRY_RUN, logger, portico_folder_destination_path, pdf_file, portico_folder_name):
+                        pdf_file_moved += 1
+                     
+                           
+
+   print(f"folders_created = {folder_created}")
+   print(f"files copied = {files_copied}")
+   print(f"pdf moved = {pdf_file_moved}")
+
+         
+
+archive(logger)
+
